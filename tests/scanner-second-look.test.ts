@@ -1,6 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScanEvent } from '../src/shared/types';
 
+// These remote-range liveness tests have no local interfaces or gateway. Keep that fixture
+// independent of the runner's adapters, permissions and installed route command.
+vi.mock('node:os', async (original) => ({
+  ...(await original<typeof import('node:os')>()),
+  networkInterfaces: () => ({}),
+}));
+vi.mock('node:child_process', async (original) => {
+  const { EventEmitter } = await import('node:events');
+  return {
+    ...(await original<typeof import('node:child_process')>()),
+    spawn: () => {
+      const child = Object.assign(new EventEmitter(), { stdout: new EventEmitter(), kill: () => {} });
+      queueMicrotask(() => child.emit('close', 0));
+      return child;
+    },
+  };
+});
+
 /** Probes sent to each address, and the addresses that answer a ping: `late` ones only from their second ping on. */
 const pings = new Map<string, number>();
 const connections = new Map<string, number>();
