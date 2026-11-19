@@ -262,12 +262,17 @@ Meshwork yourself from this repository, as described below.
 
 ## Build from source
 
+For this fork's Windows development workflow, see [Windows setup](docs/WINDOWS.md).
+The checked-in launcher provides `setup`, `doctor`, `dev`, `verify`, `build` and `package`
+tasks; for example, run `.\run.cmd setup`, then `.\run.cmd verify` and `.\run.cmd dev`
+from PowerShell. Project guidance for coding agents is in [AGENTS.md](AGENTS.md).
+
 ### 1. Prerequisites
 
 | | macOS | Windows |
 | --- | --- | --- |
 | Node.js | 24 or later | 24 or later |
-| pnpm | 10 or later (`corepack enable pnpm`, or `npm install -g pnpm`) | same |
+| pnpm | 11.25.0 (`npm install -g pnpm@11.25.0`; pinned in `package.json`) | same |
 | Git | any recent version | any recent version |
 | Native tools | Xcode Command Line Tools (`xcode-select --install`), for the Wi-Fi helper | none |
 
@@ -277,9 +282,9 @@ macOS and Windows.
 ### 2. Get the code and install dependencies
 
 ```bash
-git clone https://github.com/influxnetwork/meshwork.git
+git clone https://github.com/prime052i/meshwork.git
 cd meshwork
-pnpm install
+pnpm install --frozen-lockfile
 ```
 
 ### 3. Run it
@@ -297,14 +302,21 @@ development build is not signed, so on macOS 27 and later it reads fewer MAC add
 ### 4. Check your changes
 
 ```bash
+pnpm verify         # typecheck + unit tests + production build
+# Or run the stages individually:
 pnpm typecheck      # TypeScript, main + renderer
 pnpm test           # unit tests (Vitest), a few seconds
 pnpm build          # production build into out/
-pnpm test:e2e       # launches the built app and scans the local subnet (Playwright)
 ```
 
 The tests need the `openssl` command on the path, to create a throwaway certificate for the
 HTTPS tests. macOS includes it; on Windows, run the tests from Git Bash or install OpenSSL.
+The Windows launcher can also find Git for Windows' OpenSSL and make it available to its child
+processes without changing the system PATH.
+
+`pnpm test:e2e` is a separate integration check: it launches the built desktop app and actively
+scans the local subnet. Run it only in the intended test network. It is not part of `pnpm verify`
+or the Windows/macOS [verification workflow](.github/workflows/verify.yml).
 
 ### 5. Package installers
 
